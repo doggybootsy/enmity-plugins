@@ -1,7 +1,6 @@
 # dist / plugins
 dist/*
-!dist/FriendsSince.js
-!dist/SilentTyping.js
+!dist/friends-since.js
 
 node_modules/
 .DS_Store

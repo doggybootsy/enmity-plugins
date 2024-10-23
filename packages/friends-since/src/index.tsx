@@ -1,15 +1,10 @@
-import { implementPlugin } from "@lib";
+import { implementPlugin, patcher } from "@lib";
 
 import { getByName, getByProps, getByTypeName } from "enmity/metro";
-import { create } from "enmity/patcher";
 import { View } from "enmity/components";
 import { Flux, Locale } from "enmity/metro/common";
 
 import { isValidElement } from "react";
-
-import manifest from "../manifest.json";
-
-const patcher = create(manifest.name);
 
 const UserProfileSection = getByName("UserProfileSection");
 const { Text } = getByProps("TextStyleSheet", "Text");
@@ -57,12 +52,10 @@ function FriendsSinceSection({ userId }: { userId: string }) {
   );
 }
 
+const UserProfileContent = getByTypeName("UserProfileContent");
+
 implementPlugin({
-  ...manifest,
-
   onStart() {
-    const UserProfileContent = getByTypeName("UserProfileContent");
-
     patcher.after(UserProfileContent, "type", (self, [{ user }], res: React.ReactElement) => {
       try {
         const children: React.ReactNode[] = res.props.children[1].props.children[1].props.children[3].props.children.props.children;

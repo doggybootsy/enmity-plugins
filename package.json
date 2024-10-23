@@ -6,6 +6,7 @@
    "author": "Zoey & eternal",
    "scripts": {
       "build:silent-typing": "node build.js --project=silent-typing",
+      "build:doggy-dev": "node build.js --project=doggy-dev",
       "build:friends-since": "node build.js --project=friends-since"
    },
    "devDependencies": {
@@ -29,6 +30,7 @@
       "esbuild-windows-64": "^0.14.21"
    },
    "dependencies": {
+      "@rollup/plugin-alias": "^5.1.1",
       "@rollup/plugin-replace": "^6.0.1",
       "@types/react-native": "^0.73.0",
       "enmity": "^1.2.4",

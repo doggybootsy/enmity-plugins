@@ -8,6 +8,7 @@ import { defineConfig } from "rollup";
 import { resolve } from "path";
 import replace from "@rollup/plugin-replace";
 import typescriptPaths from "rollup-plugin-typescript-paths";
+import alias from "@rollup/plugin-alias";
 
 const manifest = require(`./packages/${process.env.PACKAGE}/manifest.json`);
 
@@ -15,7 +16,7 @@ export default defineConfig({
   input: resolve(`./packages/${process.env.PACKAGE}/src/index.tsx`),
   output: [
     {
-      file: `dist/${manifest.name}.js`,
+      file: `dist/${process.env.PACKAGE}.js`,
       format: "cjs",
       strict: false
     }
@@ -29,15 +30,27 @@ export default defineConfig({
         return injection + code; // Prepend the injected code to the existing chunk
       },
     },
+    alias({
+      entries: [
+        {
+          find: "react",
+          replacement: resolve("./packages/fake_node_modules/react.ts")
+        }
+      ]
+    }),
     replace({
       preventAssignment: true,
-      "process.env.DISCORD_INVITE": JSON.stringify("yYJA3qQE5F")
+      __lib_meta_data__: JSON.stringify({
+        id: process.env.PACKAGE,
+        manifest,
+        invite: "yYJA3qQE5F"
+      })
     }),
     typescriptPaths({
       preserveExtensions: true
     }),
     esbuild({
-      minify: true, 
+      minify: false, 
       target: "ES2019"
     }),
     nodeResolve({

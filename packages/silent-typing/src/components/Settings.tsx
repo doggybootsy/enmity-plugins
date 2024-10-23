@@ -1,4 +1,4 @@
-import { FormRow, FormSwitch } from "enmity/components";
+import { FormRow, FormSwitch } from "@lib/components/form";
 import { SettingsStore } from "enmity/api/settings";
 
 interface SettingsProps {
@@ -10,7 +10,7 @@ export default ({ settings }: SettingsProps) => {
     label="Example Setting"
     trailing={
       <FormSwitch
-        value={settings.get("example", true)}
+        value={settings.getBoolean("example", true)}
         onValueChange={() => settings.toggle("example", true)}
       />
     }

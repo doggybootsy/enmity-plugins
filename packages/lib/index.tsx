@@ -1,45 +1,58 @@
 import type { Command } from "enmity/api/commands";
-import type { SettingsStore } from "enmity/api/settings";
-import type { EntityAuthor } from "enmity/common";
-import type { Patcher } from "enmity/patcher";
 import { registerPlugin, type Plugin } from "enmity/managers/plugins";
-import { SettingsPanel } from "./settings";
+import { create, type Patcher } from "enmity/patcher";
+import { SettingsPanel } from "./settings-panel";
+import { LibManifest, manifest } from "./info";
+import { settings, Settings } from "./settings";
 
-interface LibPlugin {
-  name: string;
-  description: string;
-  color?: string;
-  version: string;
-  authors: EntityAuthor[] | string[];
+export { manifest, LibManifest } from "./info";
+
+export * as assets from "./assets";
+export * from "./settings";
+
+export interface LibPlugin {
   commands?: Command[];
   patches?: Patcher[];
-  SettingsPanel?: React.ComponentType<{ settings: SettingsStore }>;
+  SettingsPanel?: React.ComponentType<{ settings: Settings }>;
   onStart?(): void;
   onStop?(): void;
-  onEnable?(): void;
-  onDisable?(): void;
+  onLoad?(): void;
+  // onEnable?(): void;
+  // onDisable?(): void;
 }
+export const patcher = create(manifest.name);
 
-export function implementPlugin(plugin: LibPlugin) {
+export function implementPlugin(plugin: LibPlugin | ((manifest: LibManifest) => LibPlugin)) {
+  if (typeof plugin === "function") plugin = plugin(manifest);
+
+  const call = (name: "onStart" | "onStop" | "onLoad") => {
+    if (typeof plugin[name] === "function") plugin[name]();
+  }
+
   const $plugin: Plugin = {
-    ...plugin,
-    onStart() {
-      plugin.onStart?.();
-    },
-    onStop() {
-      plugin.onStop?.();
-    },
+    ...manifest,
+    commands: plugin.commands,
+    patches: plugin.patches,
+    onStart: () => call("onStart"),
+    onStop: () => call("onStop"),
     getSettingsPanel: undefined
   }
 
-  const SettingsPage: React.ComponentType<{ settings: SettingsStore }> = plugin.SettingsPanel ??= () => null;
+  const SettingsPage: React.ComponentType<{ settings: Settings }> = plugin.SettingsPanel ??= () => null;
   
-  // @ts-expect-error wrong types here too?
-  $plugin.getSettingsPanel = ({ settings }) => (
-    <SettingsPanel settings={settings} name={plugin.name}>
+  // @ts-expect-error one of many incorrect types
+  $plugin.getSettingsPanel = () => (
+    <SettingsPanel settings={settings}>
       <SettingsPage settings={settings} />
     </SettingsPanel>
   );
 
   registerPlugin($plugin);
+
+  // @ts-expect-error
+  $plugin.doggy = {
+    manifest, settings, patcher
+  }
+
+  call("onLoad");
 }
