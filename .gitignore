@@ -1,6 +1,8 @@
 # dist / plugins
 dist/*
+!dist/doggy-dev.js
 !dist/friends-since.js
+!dist/silent-typing.js
 
 node_modules/
 .DS_Store

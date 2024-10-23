@@ -14,6 +14,7 @@ export const FormSection = $FormSection as React.ComponentType<React.PropsWithCh
 
 interface FormRowProps extends PressableProps {
   label: React.ReactNode;
+  subLabel?: React.ReactNode;
   leading?: React.ReactNode;
   trailing?: React.ComponentType | React.ReactNode;
 }

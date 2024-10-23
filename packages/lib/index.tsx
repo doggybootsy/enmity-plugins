@@ -3,7 +3,8 @@ import { registerPlugin, type Plugin } from "enmity/managers/plugins";
 import { create, type Patcher } from "enmity/patcher";
 import { SettingsPanel } from "./settings-panel";
 import { LibManifest, manifest } from "./info";
-import { settings, Settings } from "./settings";
+import { settings } from "./settings";
+import { SettingsStore } from "enmity/api/settings";
 
 export { manifest, LibManifest } from "./info";
 
@@ -13,7 +14,7 @@ export * from "./settings";
 export interface LibPlugin {
   commands?: Command[];
   patches?: Patcher[];
-  SettingsPanel?: React.ComponentType<{ settings: Settings }>;
+  SettingsPanel?: React.ComponentType<{ settings: SettingsStore }>;
   onStart?(): void;
   onStop?(): void;
   onLoad?(): void;
@@ -38,7 +39,7 @@ export function implementPlugin(plugin: LibPlugin | ((manifest: LibManifest) => 
     getSettingsPanel: undefined
   }
 
-  const SettingsPage: React.ComponentType<{ settings: Settings }> = plugin.SettingsPanel ??= () => null;
+  const SettingsPage: React.ComponentType<{ settings: SettingsStore }> = plugin.SettingsPanel ??= () => null;
   
   // @ts-expect-error one of many incorrect types
   $plugin.getSettingsPanel = () => (

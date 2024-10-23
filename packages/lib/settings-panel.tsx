@@ -7,7 +7,7 @@ import { discordInvite, manifest } from "./info";
 import { FormDivider, FormRow, FormSection } from "./components/form";
 import { reload } from "enmity/api/native";
 import { openUserProfile } from "./util";
-import { Settings } from "./settings";
+import type { SettingsStore } from "enmity/api/settings";
 
 const Invites = getByProps("acceptInviteAndTransitionToInviteChannel");
 
@@ -71,17 +71,12 @@ function Updater() {
   return (
     <FormSection title="Updater">
       <FormRow 
-        label={(
-          <>
-            <Text variant="heading-md/semibold" style={sheet.name}>Attempt to update</Text>
-            <Text variant="text-md/normal" style={sheet.version}>Confirm both prompts to update</Text>
-          </>
-        )}
+        label="Attempt to update"
+        subLabel="Confirm both prompts to update"
         leading={<FormRow.Icon source={getIDByName("ic_sync_24px")} />}
         // disabled
         onPress={() => {
           (async function() {
-            // @ts-expect-error
             await window.enmity.plugins.uninstallPlugin(manifest.name);
 
             const url = window.doggy && window.doggy.overrideDownload() ? (
@@ -90,8 +85,8 @@ function Updater() {
               `https://raw.githubusercontent.com/doggybootsy/enmity-plugins/refs/heads/main/dist/${manifest.name}.js`
             );
 
-            // @ts-expect-error
-            await window.enmity.plugins.installPlugin(`${url}?${Math.random()}`, ({ data }) => {
+            await window.enmity.plugins.installPlugin(`${url}?${Math.random()}`, ({ data }: any) => {
+              // Go back
               if (navigation.canGoBack()) navigation.goBack();
               else navigation.pop();
 
@@ -99,6 +94,14 @@ function Updater() {
                 Dialog.show({
                   title: "Installed successfully",
                   body: "Successfully installed plugin"
+                });
+
+                setTimeout(() => {
+                  // If installed successfully reopen the page
+                  navigation.push("EnmityCustomPage", {
+                    pageName: manifest.name,
+                    pagePanel: window.enmity.plugins.getPlugin(manifest.name).getSettingsPanel
+                  });
                 });
 
                 return;
@@ -128,7 +131,7 @@ function Updater() {
   );
 }
 
-export function SettingsPanel({ settings, children }: React.PropsWithChildren<{ settings: Settings }>) {
+export function SettingsPanel({ settings, children }: React.PropsWithChildren<{ settings: SettingsStore }>) {
 	const icons = {
 		GitHub: getIDByName("img_account_sync_github_white"),
 		Discord: getIDByName("Discord"),

@@ -9,6 +9,7 @@ import { resolve } from "path";
 import replace from "@rollup/plugin-replace";
 import typescriptPaths from "rollup-plugin-typescript-paths";
 import alias from "@rollup/plugin-alias";
+import { readdirSync } from "fs";
 
 const manifest = require(`./packages/${process.env.PACKAGE}/manifest.json`);
 
@@ -44,13 +45,19 @@ export default defineConfig({
         id: process.env.PACKAGE,
         manifest,
         invite: "yYJA3qQE5F"
+      }),
+      __doggy_dev_data__: JSON.stringify({
+        plugins: readdirSync("./dist").map((value) => ({
+          ...require(`./packages/${value.slice(0, -3)}/manifest.json`),
+          name: value.slice(0, -3)
+        }))
       })
     }),
     typescriptPaths({
       preserveExtensions: true
     }),
     esbuild({
-      minify: false, 
+      minify: true, 
       target: "ES2019"
     }),
     nodeResolve({

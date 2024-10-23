@@ -10,4 +10,5 @@ declare namespace NodeJS {
 // global.d.ts
 interface Window {
   doggy: typeof import("../packages/doggy-dev/src/global")["doggy"];
+  enmity: any;
 }

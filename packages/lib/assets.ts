@@ -1,5 +1,4 @@
 export function getIDByName(name: string): number {
-  // @ts-expect-error
   const id = window.enmity.assets.getIDByName(name);
 
   if (typeof id === "undefined") {
@@ -22,7 +21,6 @@ export interface Asset {
 }
 
 export function getByName(name: string): Asset {
-  // @ts-expect-error
   const asset = window.enmity.assets.getByName(name);
 
   if (typeof asset === "undefined") {
@@ -31,7 +29,6 @@ export function getByName(name: string): Asset {
   return asset;
 }
 export function getById(id: string): Asset {
-  // @ts-expect-error
   const asset = window.enmity.assets.getById(id);
 
   if (typeof asset === "undefined") {
