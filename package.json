@@ -33,7 +33,9 @@
       "@rollup/plugin-alias": "^5.1.1",
       "@rollup/plugin-replace": "^6.0.1",
       "@types/react-native": "^0.73.0",
+      "@types/ws": "^8.5.12",
       "enmity": "^1.2.4",
-      "rollup-plugin-typescript-paths": "^1.5.0"
+      "rollup-plugin-typescript-paths": "^1.5.0",
+      "ws": "^8.18.0"
    }
 }

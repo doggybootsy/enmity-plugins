@@ -7,8 +7,9 @@ import {
   FormRow as $FormRow,
   FormDivider as $FormDivider,
   FormSwitch as $FormSwitch,
+  FormInput as $FormInput
 } from "enmity/components";
-import type { PressableProps } from "react-native";
+import type { PressableProps, TextInputProps } from "react-native";
 
 export const FormSection = $FormSection as React.ComponentType<React.PropsWithChildren<{ title: string }>>;
 
@@ -31,4 +32,10 @@ export const FormDivider = () => __jsx__($FormDivider);
 export const FormSwitch = $FormSwitch as React.ComponentType<{
   value: boolean,
   onValueChange(value: boolean): void
+}>;
+
+export const FormInput = $FormInput as React.ComponentType<Omit<TextInputProps, "onChange"> & {
+  title: React.ReactNode;
+  value: string;
+  onChange(value: string): void;
 }>;

@@ -1,3 +1,6 @@
+import { Asset } from "enmity/api/assets";
+export { Asset } from "enmity/api/assets";
+
 export function getIDByName(name: string): number {
   const id = window.enmity.assets.getIDByName(name);
 
@@ -5,19 +8,6 @@ export function getIDByName(name: string): number {
     throw new Error(`Asset Id by the name of '${name}' is undefined`)
   }
   return id;
-}
-
-type AssetType = "jsona" | "jpg" | "png" | "svg" | "lottie" | "ttf" | "webm";
-
-export interface Asset {
-  httpServerLocation: string,
-  width: number,
-  height: number,
-  scales: number[],
-  hash: string,
-  name: string,
-  type: AssetType,
-  id: number
 }
 
 export function getByName(name: string): Asset {

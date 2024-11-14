@@ -1,13 +1,14 @@
 import { Constants, Dialog, Linking, NavigationNative, StyleSheet } from "enmity/metro/common";
 import { getByProps } from "enmity/metro";
-import { Image, Pressable, ScrollView, View } from "enmity/components";
+import { Button, Image, KeyboardAvoidingView, Pressable, ScrollView, View } from "enmity/components";
 
 import { getIDByName } from "./assets";
 import { discordInvite, manifest } from "./info";
 import { FormDivider, FormRow, FormSection } from "./components/form";
 import { reload } from "enmity/api/native";
-import { openUserProfile } from "./util";
+import { ErrorBoundary, FallbackProps, openUserProfile } from "./util";
 import type { SettingsStore } from "enmity/api/settings";
+import { useState } from "react";
 
 const Invites = getByProps("acceptInviteAndTransitionToInviteChannel");
 
@@ -23,7 +24,18 @@ const sheet = StyleSheet.createThemedStyleSheet({
     color: Constants.ThemeColorMap.HEADER_SECONDARY
   },
   scroller: {
-    height: "100%"
+    flexGrow: 1,
+    flexShrink: 1
+  },
+  info: {
+    flexGrow: 0,
+    flexShrink: 0
+  },
+  view: {
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    gap: 0
   }
 });
 
@@ -32,6 +44,7 @@ const BUBBLE_SIZE = 32;
 function Info() {
   return (
     <FormRow 
+      style={sheet.info}
       label={(
         <>
           <Text variant="heading-lg/semibold" style={sheet.name}>{prettyName}</Text>
@@ -78,17 +91,14 @@ function Updater() {
         onPress={() => {
           (async function() {
             await window.enmity.plugins.uninstallPlugin(manifest.name);
+            
+            // Go back
+            if (navigation.canGoBack()) navigation.goBack();
+            else navigation.pop();
 
-            const url = window.doggy && window.doggy.overrideDownload() ? (
-              `http://${window.doggy.address}/${manifest.name}.js`
-            ) : (
-              `https://raw.githubusercontent.com/doggybootsy/enmity-plugins/refs/heads/main/dist/${manifest.name}.js`
-            );
+            const url = `https://raw.githubusercontent.com/doggybootsy/enmity-plugins/refs/heads/main/dist/${manifest.name}.js`;
 
-            await window.enmity.plugins.installPlugin(`${url}?${Math.random()}`, ({ data }: any) => {
-              // Go back
-              if (navigation.canGoBack()) navigation.goBack();
-              else navigation.pop();
+            await window.enmity.plugins.installPlugin(`${url}?__random__${Math.random().toString(36).slice(2)}`, ({ data }: any) => {
 
               if (data === "installed_plugin") {
                 Dialog.show({
@@ -102,7 +112,7 @@ function Updater() {
                     pageName: manifest.name,
                     pagePanel: window.enmity.plugins.getPlugin(manifest.name).getSettingsPanel
                   });
-                });
+                }, 10);
 
                 return;
               }
@@ -131,41 +141,100 @@ function Updater() {
   );
 }
 
+function Fallback({ error, info, self }: FallbackProps) {
+  const navigation = NavigationNative.useNavigation();
+  const [ viewStack, shouldViewStack ] = useState(false);
+
+  return (
+    <View 
+      style={{
+        borderWidth: 2,
+        padding: 8,
+        margin: 8,
+        borderColor: "red",
+        borderRadius: 8
+      }}
+    >
+      <Text style={{ color: "red" }}>React Error</Text>
+      <View>
+        <Text>{error.message}</Text>
+      </View>
+      <Button 
+        title="View Complete Error Info"
+        onPress={() => shouldViewStack(v => !v)}
+      />
+      {viewStack && (error.stack || info.componentStack || info.digest) && (
+        <View>
+          {error.stack && <Text>{error.stack}</Text>}
+          {info.digest && <Text>{info.digest}</Text>}
+          {info.componentStack && <Text>{info.componentStack}</Text>}
+        </View>
+      )}
+      <Button 
+        title="Attempt Recovery"
+        onPress={() => self.setState({ hasError: false })}
+      />
+      <Button 
+        title="Exit Settings"
+        onPress={() => {
+          // Go back
+          if (navigation.canGoBack()) navigation.goBack();
+          else navigation.pop();
+        }}
+      />
+      <Button 
+        title="Reload"
+        onPress={() => reload()}
+      />
+    </View>
+  )
+}
+
 export function SettingsPanel({ settings, children }: React.PropsWithChildren<{ settings: SettingsStore }>) {
-	const icons = {
+  const icons = {
 		GitHub: getIDByName("img_account_sync_github_white"),
 		Discord: getIDByName("Discord"),
 	};
   
   return (
-    <View>
+    <View style={sheet.view}>
       <Info />
+      <FormDivider />
       <ScrollView style={sheet.scroller}>
-        <Updater />
-        <FormSection title="Links">
-          <FormRow 
-            label="Support Server"
-            leading={<FormRow.Icon source={icons.Discord} />}
-            trailing={FormRow.Arrow}
-            onPress={() => {
-              Invites.acceptInviteAndTransitionToInviteChannel({
-                inviteKey: discordInvite,
-                context: { location: "Invite Button Embed" },
-                callback: () => { }
-              });
-            }}
-          />
-          <FormDivider />
-          <FormRow 
-            label="Source"
-            leading={<FormRow.Icon source={icons.GitHub} />}
-            trailing={FormRow.Arrow}
-            onPress={() => {
-              Linking.openURL(`https://github.com/doggybootsy/enmity-plugins/tree/main/packages/${manifest.name}/`);
-            }}
-          />
-        </FormSection>
-        {children}
+        <KeyboardAvoidingView
+          enabled
+          behavior="position"
+          contentContainerStyle={{ backfaceVisibility: "hidden" }}
+        >
+          <Updater />
+          <FormSection title="Links">
+            <FormRow 
+              label="Support Server"
+              leading={<FormRow.Icon source={icons.Discord} />}
+              trailing={FormRow.Arrow}
+              onPress={() => {
+                Invites.acceptInviteAndTransitionToInviteChannel({
+                  inviteKey: discordInvite,
+                  context: { location: "Invite Button Embed" },
+                  callback: () => { }
+                });
+              }}
+            />
+            <FormDivider />
+            <FormRow 
+              label="Source"
+              leading={<FormRow.Icon source={icons.GitHub} />}
+              trailing={FormRow.Arrow}
+              onPress={() => {
+                Linking.openURL(`https://github.com/doggybootsy/enmity-plugins/tree/main/packages/${manifest.name}/`);
+              }}
+            />
+          </FormSection>
+          <ErrorBoundary fallback={Fallback}>
+            {children}
+          </ErrorBoundary>
+          <View style={{ height: 50 }} />
+        </KeyboardAvoidingView>
       </ScrollView>
     </View>
   )

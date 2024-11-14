@@ -1,17 +1,14 @@
 import { implementPlugin, patcher } from "@lib";
 
-import { getByName, getByProps, getByTypeName } from "enmity/metro";
+import { getByName, getByTypeName } from "enmity/metro";
 import { View } from "enmity/components";
-import { Flux, Locale } from "enmity/metro/common";
+import { Locale } from "enmity/metro/common";
 
 import { isValidElement } from "react";
+import { Text } from "@lib/components/text";
+import { getStore, useStateFromStores } from "@lib/util";
 
 const UserProfileSection = getByName("UserProfileSection");
-const { Text } = getByProps("TextStyleSheet", "Text");
-
-function getStore(storeName: string) {
-  return Flux.Store.getAll().find((store: any) => store.getName() === storeName);
-}
 
 const RelationshipStore = getStore("RelationshipStore");
 
@@ -26,7 +23,7 @@ function getCreatedAt(value: Date | string | number, lang?: string) {
 }
 
 function FriendsSinceSection({ userId }: { userId: string }) {
-  const since = Flux.useStateFromStores([ RelationshipStore ], () => {
+  const since = useStateFromStores([ RelationshipStore ], () => {
     const since = RelationshipStore.getSince(userId);
 
     if (since && RelationshipStore.isFriend(userId)) return getCreatedAt(since, (Locale as unknown as { getLocale(): string }).getLocale());

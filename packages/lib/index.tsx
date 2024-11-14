@@ -34,8 +34,8 @@ export function implementPlugin(plugin: LibPlugin | ((manifest: LibManifest) => 
     ...manifest,
     commands: plugin.commands,
     patches: plugin.patches,
-    onStart: () => call("onStart"),
-    onStop: () => call("onStop"),
+    onStart: call.bind(null, "onStart"),
+    onStop: call.bind(null, "onStop"),
     getSettingsPanel: undefined
   }
 
@@ -51,9 +51,19 @@ export function implementPlugin(plugin: LibPlugin | ((manifest: LibManifest) => 
   registerPlugin($plugin);
 
   // @ts-expect-error
-  $plugin.doggy = {
+  $plugin["$$_doggy_$$"] = {
     manifest, settings, patcher
   }
 
   call("onLoad");
+
+  if (Boolean(!manifest.color || manifest.color === "random")) {
+    const globalPlugin = window.enmity.plugins.getPlugin(manifest.name) as Plugin | null;
+
+    if (globalPlugin) {
+      Object.defineProperty(globalPlugin, "color", {
+        get: () => `#${Math.floor(Math.random() * (0xFFFFFF + 1)).toString(16)}`
+      });
+    }
+  }
 }
