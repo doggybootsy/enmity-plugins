@@ -2,7 +2,7 @@ import type { Command } from "enmity/api/commands";
 import { registerPlugin, type Plugin } from "enmity/managers/plugins";
 import { create, type Patcher } from "enmity/patcher";
 import { SettingsPanel } from "./settings-panel";
-import { LibManifest, manifest } from "./info";
+import { manifest } from "./info";
 import { settings } from "./settings";
 import { SettingsStore } from "enmity/api/settings";
 
@@ -23,19 +23,33 @@ export interface LibPlugin {
 }
 export const patcher = create(manifest.name);
 
-export function implementPlugin(plugin: LibPlugin | ((manifest: LibManifest) => LibPlugin)) {
-  if (typeof plugin === "function") plugin = plugin(manifest);
+let hasImplemented = false;
+export function implementPlugin(plugin: LibPlugin | (() => LibPlugin)) {
+  if (hasImplemented) {
+    throw new Error("Plugin has already been implemented!");
+  }
+  
+  hasImplemented = true;
 
-  const call = (name: "onStart" | "onStop" | "onLoad") => {
+  if (typeof plugin === "function") plugin = plugin();
+
+  const invoke = (name: "onStart" | "onStop" | "onLoad") => {
     if (typeof plugin[name] === "function") plugin[name]();
+  }
+
+  if (!manifest.color || manifest.color === "random") {
+    manifest.color = `#${Math.floor(Math.random() * (0xFFFFFF + 1)).toString(16)}`;
   }
 
   const $plugin: Plugin = {
     ...manifest,
     commands: plugin.commands,
     patches: plugin.patches,
-    onStart: call.bind(null, "onStart"),
-    onStop: call.bind(null, "onStop"),
+    onStart: invoke.bind(null, "onStart"),
+    onStop() {
+      invoke("onStop");
+      patcher.unpatchAll();
+    },
     getSettingsPanel: undefined
   }
 
@@ -55,15 +69,5 @@ export function implementPlugin(plugin: LibPlugin | ((manifest: LibManifest) => 
     manifest, settings, patcher
   }
 
-  call("onLoad");
-
-  if (Boolean(!manifest.color || manifest.color === "random")) {
-    const globalPlugin = window.enmity.plugins.getPlugin(manifest.name) as Plugin | null;
-
-    if (globalPlugin) {
-      Object.defineProperty(globalPlugin, "color", {
-        get: () => `#${Math.floor(Math.random() * (0xFFFFFF + 1)).toString(16)}`
-      });
-    }
-  }
+  invoke("onLoad");
 }

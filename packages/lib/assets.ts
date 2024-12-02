@@ -18,8 +18,9 @@ export function getByName(name: string): Asset {
   }
   return asset;
 }
+
 export function getById(id: string): Asset {
-  const asset = window.enmity.assets.getById(id);
+  const asset = window.enmity.assets.getByID(id);
 
   if (typeof asset === "undefined") {
     throw new Error(`Asset by the id of '${id}' is undefined`)

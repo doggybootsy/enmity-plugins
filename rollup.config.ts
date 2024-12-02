@@ -9,6 +9,7 @@ import { resolve } from "path";
 import replace from "@rollup/plugin-replace";
 import typescriptPaths from "rollup-plugin-typescript-paths";
 import alias from "@rollup/plugin-alias";
+import { extractGitInfo } from "./git";
 
 const IS_PROD = Boolean(process.env.PROD);
 
@@ -23,6 +24,10 @@ export default defineConfig({
       strict: false
     }
   ],
+  // watch: {
+  //   include: [ `./packages/${process.env.PACKAGE}/src/**`, `./packages/${process.env.PACKAGE}/manifest.json` ],
+  //   exclude: "node_modules/**"
+  // },
   plugins: [
     {
       name: "create-jsx",
@@ -42,10 +47,12 @@ export default defineConfig({
     }),
     replace({
       preventAssignment: true,
-      __lib_meta_data__: JSON.stringify({
+      "__lib_meta_data__": JSON.stringify({
         id: process.env.PACKAGE,
         manifest,
-        invite: "yYJA3qQE5F"
+        invite: "yYJA3qQE5F",
+        git: extractGitInfo(),
+        IS_PROD
       })
     }),
     typescriptPaths({
@@ -56,7 +63,10 @@ export default defineConfig({
       target: "ES2019"
     }),
     nodeResolve({
-      extensions: [ ".tsx", ".ts", ".jsx", ".js" ]
+      extensions: [ 
+        ".tsx", ".ts", ".cts", ".mts", 
+        ".jsx", ".js", ".mjs", ".cjs"
+      ]
     }),
     commonjs(),
     json(),

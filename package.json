@@ -6,8 +6,9 @@
    "author": "Zoey & eternal",
    "scripts": {
       "build:silent-typing": "node build.js --project=silent-typing",
-      "build:doggy-dev": "node build.js --project=doggy-dev",
-      "build:friends-since": "node build.js --project=friends-since"
+      "build:friends-since": "node build.js --project=friends-since",
+      "build:rdt": "node build.js --project=rdt",
+      "start-server": "bun run ./packages/server"
    },
    "devDependencies": {
       "@rollup/plugin-commonjs": "^21.0.1",

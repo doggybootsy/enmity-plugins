@@ -3,16 +3,16 @@ import { getByProps } from "enmity/metro";
 import { Button, Image, KeyboardAvoidingView, Pressable, ScrollView, View } from "enmity/components";
 
 import { getIDByName } from "./assets";
-import { discordInvite, manifest } from "./info";
+import { discordInvite, git, manifest } from "./info";
 import { FormDivider, FormRow, FormSection } from "./components/form";
 import { reload } from "enmity/api/native";
 import { ErrorBoundary, FallbackProps, openUserProfile } from "./util";
 import type { SettingsStore } from "enmity/api/settings";
 import { useState } from "react";
 
-const Invites = getByProps("acceptInviteAndTransitionToInviteChannel");
+import { Pile, Text } from "./components/discord";
 
-const { Pile, Text } = getByProps("Pile", "Text");
+const Invites = getByProps("acceptInviteAndTransitionToInviteChannel");
 
 const prettyName = manifest.name.split("-").map((part) => part[0].toUpperCase() + part.slice(1)).join(" ");
 
@@ -96,7 +96,9 @@ function Updater() {
             if (navigation.canGoBack()) navigation.goBack();
             else navigation.pop();
 
-            const url = `https://raw.githubusercontent.com/doggybootsy/enmity-plugins/refs/heads/main/dist/${manifest.name}.js`;
+            const [ user, repo ] = git.url.split("/").slice(-2);
+
+            const url = `https://raw.githubusercontent.com/${user}/${repo}/refs/heads/${git.branch}/dist/${manifest.name}.js`;
 
             await window.enmity.plugins.installPlugin(`${url}?__random__${Math.random().toString(36).slice(2)}`, ({ data }: any) => {
 
@@ -199,7 +201,6 @@ export function SettingsPanel({ settings, children }: React.PropsWithChildren<{ 
   return (
     <View style={sheet.view}>
       <Info />
-      <FormDivider />
       <ScrollView style={sheet.scroller}>
         <KeyboardAvoidingView
           enabled
@@ -226,7 +227,9 @@ export function SettingsPanel({ settings, children }: React.PropsWithChildren<{ 
               leading={<FormRow.Icon source={icons.GitHub} />}
               trailing={FormRow.Arrow}
               onPress={() => {
-                Linking.openURL(`https://github.com/doggybootsy/enmity-plugins/tree/main/packages/${manifest.name}/`);
+                const [ user, repo ] = git.url.split("/").slice(-2);
+
+                Linking.openURL(`https://github.com/${user}/${repo}/tree/${git.branch}/packages/${manifest.name}/`);
               }}
             />
           </FormSection>

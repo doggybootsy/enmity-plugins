@@ -1,4 +1,5 @@
 import type { EntityAuthor } from "enmity/common";
+import type { GitInfo } from "../../git";
 
 export interface LibManifest {
   name: string;
@@ -11,7 +12,9 @@ export interface LibManifest {
 interface LibSecretInfo {
   manifest: LibManifest,
   invite: string,
-  id: string
+  id: string,
+  git: GitInfo,
+  IS_PROD: boolean
 }
 
 const secret: LibSecretInfo = (
@@ -26,4 +29,8 @@ export const manifest: LibManifest = Object.assign(
   { name: secret.id }
 );
 
-export const discordInvite = secret.invite;
+export const discordInvite: string = secret.invite;
+
+export const git: GitInfo = secret.git;
+
+export const IS_PROD: boolean = secret.IS_PROD;

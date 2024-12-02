@@ -1,14 +1,13 @@
-import { implementPlugin, patcher } from "@lib";
+import { assets, implementPlugin, patcher, settings } from "@lib";
+import { Text } from "@lib/components/discord";
+import { createThemedStyleSheet, ThemeColorMap, ErrorBoundary, getStore, useStateFromStores } from "@lib/util";
+import { FormRow, FormSection, FormSwitch } from "@lib/components/form";
 
-import { getByName, getByTypeName } from "enmity/metro";
-import { View } from "enmity/components";
+import { getByName } from "enmity/metro";
+import { Image, View } from "enmity/components";
 import { Locale } from "enmity/metro/common";
 
 import { isValidElement } from "react";
-import { Text } from "@lib/components/text";
-import { getStore, useStateFromStores } from "@lib/util";
-
-const UserProfileSection = getByName("UserProfileSection");
 
 const RelationshipStore = getStore("RelationshipStore");
 
@@ -22,7 +21,27 @@ function getCreatedAt(value: Date | string | number, lang?: string) {
   });
 }
 
-function FriendsSinceSection({ userId }: { userId: string }) {
+const styles = createThemedStyleSheet({
+  header: {
+    marginBottom: 8
+  },
+  text: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    columnGap: 6
+  },
+  icon: {
+    height: 16,
+    width: 16,
+    tintColor: ThemeColorMap.INTERACTIVE_NORMAL
+  }
+});
+
+const SimplifiedUserProfileAboutMeCard = getByName("SimplifiedUserProfileAboutMeCard", { default: false });
+
+const ic_friend_wave_24px = assets.getIDByName("ic_friend_wave_24px");
+
+const FriendsSinceSection = ErrorBoundary.wrap(function({ userId }: { userId: string }) {
   const since = useStateFromStores([ RelationshipStore ], () => {
     const since = RelationshipStore.getSince(userId);
 
@@ -31,46 +50,50 @@ function FriendsSinceSection({ userId }: { userId: string }) {
   });
   
   if (!since) return;
-
+  
   return (
-    <UserProfileSection title="Friends Since">
-      <View 
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center"
-        }}
-      >
-        <Text variant="text-md/normal" style={{ marginRight: 8 }}>
+    <View>
+      <Text color="header-secondary" style={styles.header} variant="text-sm/semibold">
+        Friends Since
+      </Text>
+      <View style={styles.text}>
+        {settings.getBoolean("add-icon", true) && (
+          <Image source={ic_friend_wave_24px} style={styles.icon} />
+        )}
+        <Text>
           {since}
         </Text>
       </View>
-    </UserProfileSection>
-  );
-}
-
-const UserProfileContent = getByTypeName("UserProfileContent");
+    </View>
+  )
+});
 
 implementPlugin({
-  onStart() {
-    patcher.after(UserProfileContent, "type", (self, [{ user }], res: React.ReactElement) => {
-      try {
-        const children: React.ReactNode[] = res.props.children[1].props.children[1].props.children[3].props.children.props.children;
-        
-        const index = children.findIndex((value) => isValidElement(value) && value.props.user && "channel" in value.props);      
-        
-        // if index is `-1` just noop
-        if (!~index) return;
+  onStart() {    
+    patcher.after(SimplifiedUserProfileAboutMeCard, "default", (self, [{ userId }], res) => {
+      const children: React.ReactNode[] = res.props.children;
+      
+      let index = children.findIndex((value) => isValidElement(value) && typeof value.type === "function" && value.type.name === "MemberJoinDates");      
+      
+      // if index is `-1` just push to end
+      if (!~index) index = children.length;
 
-        children.splice(index + 1, 0, <FriendsSinceSection userId={user.id} />);
-      } catch (error) {
-        
-      } finally {
-        return res;
-      }
+      children.splice(index + 1, 0, <FriendsSinceSection userId={userId} />);
     });
   },
-  onStop() {
-    patcher.unpatchAll();
+  SettingsPanel() {
+    return (
+      <FormSection title="Settings">
+        <FormRow
+          label="Add Icon"
+          trailing={
+            <FormSwitch 
+              value={settings.getBoolean("add-icon", true)} 
+              onValueChange={(value) => settings.set("add-icon", value)} 
+            />
+          }
+        />
+      </FormSection>
+    )
   }
 });

@@ -1,10 +1,11 @@
 import { Flux, Profiles, StyleSheet, Users } from "enmity/metro/common";
-import { Component } from "react";
+import { Component, createElement } from "react";
 import type { ImageStyle, TextStyle, ViewStyle } from "react-native";
-import { Text } from "./components/text";
+import { Text } from "./components/discord";
 
 type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle };
 
+export const ThemeColorMap = StyleSheet.ThemeColorMap;
 export function createThemedStyleSheet<T extends NamedStyles<T> | NamedStyles<any>>(styles: T & NamedStyles<any>): { [key in keyof T]: any } {
   return StyleSheet.createThemedStyleSheet(styles);
 }
@@ -19,6 +20,16 @@ export function openUserProfile(userId: string) {
   }
 }
 
+export function inherits(ctor: Function, superCtor: Function) {
+  Object.defineProperty(ctor, "super_", {
+    value: superCtor,
+    writable: true,
+    configurable: true,
+  });
+  Object.setPrototypeOf(ctor.prototype, superCtor.prototype);
+}
+
+
 // FallbackProps definition
 export type FallbackProps = { error: Error, info: React.ErrorInfo, self: ErrorBoundaryType };
 
@@ -32,10 +43,6 @@ export const ErrorBoundary = (() => {
     Component.call(this, props, context);
     this.state = { hasError: false };
   }
-
-  // Inherit from React.Component
-  ErrorBoundary.prototype = Object.create(Component.prototype);
-  ErrorBoundary.prototype.constructor = ErrorBoundary;
 
   ErrorBoundary.prototype.componentDidCatch = function(this: ErrorBoundaryType, error: Error, info: React.ErrorInfo) {
     this.setState({ hasError: true, error, info });
@@ -57,9 +64,26 @@ export const ErrorBoundary = (() => {
     fallback: <Text style={{ color: "red" }}>React Error</Text>
   };
 
+  inherits(ErrorBoundary, Component);
+
+  ErrorBoundary.wrap = function<T>(WrapComponent: React.ComponentType<T>): React.ComponentType<T> {
+    function ErrorBoundary(this: ErrorBoundaryType, props: T, context: any) {
+      Component.call(this, props, context);
+    }
+    ErrorBoundary.prototype.render = function(this: ErrorBoundaryType) {
+      return createElement(WrapComponent as any, this.props);
+    }
+
+    inherits(ErrorBoundary, Component);
+
+    return ErrorBoundary as React.ComponentType<T>;
+  }
+
   ErrorBoundary.displayName = "DoggyBootsy(ErrorBoundary)";
 
-  return ErrorBoundary as any as React.ComponentClass<ErrorBoundaryProps, ErrorBoundaryState>;
+  return ErrorBoundary as any as React.ComponentClass<ErrorBoundaryProps, ErrorBoundaryState> & {
+    wrap<T>(component: React.ComponentType<T>): React.ComponentClass<T>
+  };
 })();
 
 export function getStore(name: string) {
